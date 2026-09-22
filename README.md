@@ -55,3 +55,14 @@ Les contrôles disponibles sont :
 pnpm check
 pnpm build
 ```
+
+## Publication GitHub Pages
+
+Le dépôt est configuré pour publier la racine de la branche `main`. Après une modification de l’application, reconstruire puis recopier le contenu de `dist/public` à la racine avant de pousser :
+
+```bash
+pnpm build
+cp -R dist/public/. .
+touch .nojekyll
+git add . && git commit -m "build: update GitHub Pages artifact" && git push
+```
