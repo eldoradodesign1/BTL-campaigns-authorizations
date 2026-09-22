@@ -1,0 +1,21 @@
+{
+  "name": "BTL Africa — Campaign authorizations",
+  "short_name": "BTL Authorizations",
+  "description": "Registre des autorisations de campagne BTL Africa.",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#071015",
+  "background_color": "#071015",
+  "icons": [
+    {
+      "src": "./btl-beyond-the-line-icon-v2.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    }
+  ]
+}
