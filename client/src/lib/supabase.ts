@@ -16,6 +16,12 @@ export type UserProfile = {
   profile_updated_at: string | null;
 };
 
+export const AUTHORIZATION_ROLES: UserRole[] = ["supervisor", "sub_admin", "admin", "super_admin"];
+
+export function canAccessAuthorizations(role: UserRole): boolean {
+  return AUTHORIZATION_ROLES.includes(role);
+}
+
 export type CampaignRecord = {
   id: string;
   code: string;
@@ -159,6 +165,10 @@ export async function signIn(phone: string, password: string): Promise<UserProfi
     const { data, error } = await client.from("users").select(`${userColumns},password_hash`).eq("phone", candidate).eq("password_hash", password).maybeSingle();
     if (!error && data) {
       const profile = asProfile(data);
+      if (!canAccessAuthorizations(profile.role)) {
+        localStorage.removeItem(profileKey);
+        throw new Error("Ce compte n’a pas accès au registre des autorisations. Utilisez un compte superviseur ou administratif.");
+      }
       activeProfile = profile;
       localStorage.setItem(profileKey, JSON.stringify(profile));
       return profile;

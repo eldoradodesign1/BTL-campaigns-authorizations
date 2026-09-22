@@ -4,6 +4,7 @@ import { AlertCircle, Archive, ArrowRight, BriefcaseBusiness, CalendarDays, Chec
 import BrandLogo from "@/components/BrandLogo";
 import {
   clearSupabaseConnection,
+  canAccessAuthorizations,
   configureSupabase,
   createAuthorization,
   createCampaign,
@@ -66,7 +67,10 @@ function AuthorizationForm({ value, campaigns, editing, busy, onChange, onSubmit
 
 export default function AuthorizationDashboard({ onConnectionChanged }: { onConnectionChanged: () => void }) {
   const [configured, setConfigured] = useState(isSupabaseConfigured());
-  const [profile, setProfile] = useState<UserProfile | null>(getStoredProfile());
+  const [profile, setProfile] = useState<UserProfile | null>(() => {
+    const stored = getStoredProfile();
+    return stored && canAccessAuthorizations(stored.role) ? stored : null;
+  });
   const [campaigns, setCampaigns] = useState<CampaignRecord[]>([]);
   const [authorizations, setAuthorizations] = useState<AuthorizationRecord[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState("");
@@ -106,8 +110,8 @@ export default function AuthorizationDashboard({ onConnectionChanged }: { onConn
     try { setAuthorizations(await loadAuthorizations(actor.id, campaignId)); } catch (error) { setNotice({ kind: "error", message: readableError(error, "Impossible de charger les autorisations.") }); } finally { setLoadingData(false); }
   }
 
-  useEffect(() => { if (profile) void refreshCampaigns(profile); }, [profile]);
-  useEffect(() => { if (profile && selectedCampaignId) void refreshAuthorizations(profile, selectedCampaignId); }, [profile, selectedCampaignId]);
+  useEffect(() => { if (profile && canAccessAuthorizations(profile.role)) void refreshCampaigns(profile); }, [profile]);
+  useEffect(() => { if (profile && canAccessAuthorizations(profile.role) && selectedCampaignId) void refreshAuthorizations(profile, selectedCampaignId); }, [profile, selectedCampaignId]);
 
   async function handleLogin(event: FormEvent) {
     event.preventDefault(); setBusy(true); setNotice(null);
