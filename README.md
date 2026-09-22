@@ -4,7 +4,7 @@ Registre administratif des autorisations nécessaires aux campagnes BTL Africa. 
 
 ## Fonctionnalités
 
-L’écran de connexion utilise le même couple MSISDN / mot de passe que les autres outils BTL. La session et la configuration Supabase sont conservées localement pour éviter une reconnexion inutile sur le même appareil.
+L’écran de connexion utilise le même couple MSISDN / mot de passe que les autres outils BTL. La session est conservée localement pour éviter une reconnexion inutile sur le même appareil. Le projet Supabase partagé est intégré par défaut dans l’application : un nouvel appareil ne demande donc plus de saisir l’URL ou la clé.
 
 Après connexion, les utilisateurs administratifs — superviseur, coordination, administrateur et super-administrateur — voient les campagnes disponibles. Chaque campagne possède son registre d’autorisations, avec un affichage priorisant les autorisations encore en attente.
 
@@ -16,7 +16,7 @@ Les campagnes peuvent être créées par les rôles `admin` et `super_admin`. Le
 
 ## Migration Supabase
 
-Dans le projet Supabase partagé, ouvrir le SQL Editor et exécuter :
+Dans le projet Supabase partagé, ouvrir le SQL Editor et exécuter uniquement la migration suivante si elle n’a pas déjà été exécutée :
 
 ```text
 supabase/migrations/202609220001_campaign_authorizations.sql
@@ -32,6 +32,8 @@ Cette migration :
 
 La migration suppose que les tables existantes `public.users` et `public.campaigns` sont déjà présentes dans la base BTL, comme dans le projet d’origine.
 
+Cette migration est **complémentaire** aux migrations du dépôt `btl-africa-user-registration` : elle ne recrée pas les utilisateurs, les profils, les campagnes ou les affectations. Si tu as déjà exécuté `202609220001_campaign_authorizations.sql`, ne l’exécute pas une deuxième fois ; l’application utilise directement les tables et RPC qu’elle a créées.
+
 ## Configuration locale
 
 Installer les dépendances puis lancer le projet :
@@ -41,7 +43,7 @@ pnpm install
 pnpm dev
 ```
 
-La configuration peut être fournie par les variables `VITE_SUPABASE_URL` et `VITE_SUPABASE_PUBLISHABLE_KEY` / `VITE_SUPABASE_ANON_KEY`. Elle peut aussi être saisie depuis l’écran de première configuration, avec une clé publishable ou anon uniquement.
+La configuration par défaut pointe vers le projet Supabase BTL partagé. Pour un autre environnement, les variables `VITE_SUPABASE_URL` et `VITE_SUPABASE_PUBLISHABLE_KEY` / `VITE_SUPABASE_ANON_KEY` restent supportées. La clé intégrée est une clé publishable/anon, jamais une clé `service_role`.
 
 ## Principes d’interface
 

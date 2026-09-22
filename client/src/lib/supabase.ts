@@ -68,6 +68,10 @@ export type SupabaseConnection = { url: string; publishableKey: string };
 
 const runtimeKey = "btl-supabase-connection";
 const profileKey = "btl-authorization-profile";
+const defaultConnection: SupabaseConnection = {
+  url: "https://upkzlppvwckriuidnyvq.supabase.co",
+  publishableKey: "sb_publishable_36S8t4yZQhYXXMZa3p9ldg_EWnP8gPL",
+};
 const envUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const envKey = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined;
 
@@ -95,7 +99,9 @@ function readStoredProfile(): UserProfile | null {
   }
 }
 
-let activeConnection: SupabaseConnection | null = readRuntimeConnection() || (envUrl && envKey ? { url: envUrl, publishableKey: envKey } : null);
+// This is the shared BTL project. A prior explicit local configuration or
+// deployment environment still wins, while a new device uses this default.
+let activeConnection: SupabaseConnection | null = readRuntimeConnection() || (envUrl && envKey ? { url: envUrl, publishableKey: envKey } : defaultConnection);
 let supabaseClient: SupabaseClient | null = activeConnection ? createConfiguredClient(activeConnection) : null;
 let activeProfile: UserProfile | null = readStoredProfile();
 
