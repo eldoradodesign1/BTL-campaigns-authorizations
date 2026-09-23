@@ -409,7 +409,7 @@ begin
 end;
 $function$;
 
-grant execute on function public.update_campaign_cockpit_milestone(uuid, uuid, text) to anon, authenticated;
+grant execute on function public.update_campaign_cockpit_milestone(text, uuid, text) to anon, authenticated;
 
 comment on table public.campaign_cockpit_details is
   'Additive project cockpit metadata; existing campaign and user tables remain untouched.';
