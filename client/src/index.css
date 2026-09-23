@@ -149,3 +149,79 @@ input::placeholder, textarea::placeholder { color: #5f7881; }
 .insight-empty { min-height: 96px; display: grid; place-items: center; padding: 12px; color: var(--muted-2); font-size: 9px; line-height: 1.5; text-align: center; }
 @media (max-width: 1080px) { .insights-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.deadline-insight { grid-column: 1 / -1; } }
 @media (max-width: 620px) { .insights-section { padding: 15px; }.insights-heading { align-items: flex-start; flex-direction: column; gap: 10px; }.insights-grid { grid-template-columns: 1fr; }.deadline-insight { grid-column: auto; }.donut-layout { justify-content: center; }.campaign-bar-row { grid-template-columns: minmax(100px,.8fr) minmax(80px,1fr) 37px; } }
+
+
+/* Campaign delivery cockpit */
+.campaign-cockpit { display: grid; gap: 12px; margin: 0 0 18px; }
+.cockpit-hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 21px; border: 1px solid rgba(91,208,209,.22); border-radius: 18px; background: linear-gradient(120deg, rgba(0,126,211,.17), rgba(91,208,209,.07) 48%, rgba(181,239,140,.05)); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 20px 50px rgba(0,48,91,.13); }
+.cockpit-hero-copy { min-width: 0; }
+.cockpit-hero h2 { margin-top: 9px; color: #eef8f7; font-size: clamp(21px, 3vw, 32px); letter-spacing: -.065em; }
+.cockpit-hero p { max-width: 780px; margin-top: 8px; color: var(--muted); font-size: 10px; line-height: 1.55; }
+.cockpit-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 15px; }
+.cockpit-tags span { display: inline-flex; align-items: center; gap: 5px; padding: 6px 8px; border: 1px solid rgba(188,220,228,.13); border-radius: 999px; color: #b9d6d9; background: rgba(3,17,26,.26); font: 8px "DM Mono", monospace; }
+.cockpit-tags svg { color: var(--cyan); }
+.cockpit-hero-actions { display: flex; flex: none; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+.cockpit-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+.cockpit-kpis > div { min-width: 0; padding: 13px 14px; border: 1px solid rgba(188,220,228,.11); border-radius: 12px; background: rgba(7,24,34,.46); }
+.cockpit-kpis strong, .cockpit-kpis span { display: block; }
+.cockpit-kpis strong { color: var(--cyan); font: 18px "DM Mono", monospace; letter-spacing: -.07em; }
+.cockpit-kpis span { margin-top: 5px; overflow: hidden; color: var(--muted-2); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.cockpit-progress { height: 4px; overflow: hidden; margin-top: 9px; border-radius: 99px; background: rgba(188,220,228,.1); }
+.cockpit-progress i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--cyan-strong), var(--lime)); transition: width .5s var(--ease-out); }
+.cockpit-columns { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(330px, .88fr); gap: 12px; }
+.cockpit-card { min-width: 0; padding: 17px; border: 1px solid rgba(188,220,228,.11); border-radius: 15px; background: linear-gradient(145deg, rgba(13,36,48,.57), rgba(4,17,27,.45)); }
+.cockpit-card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.cockpit-card-heading h3 { margin-top: 7px; color: #dceced; font-size: 13px; letter-spacing: -.035em; }
+.cockpit-card-heading > small { color: var(--muted-2); font: 8px "DM Mono", monospace; white-space: nowrap; }
+.role-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 15px; }
+.role-card { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 9px; border: 1px solid rgba(188,220,228,.1); border-radius: 10px; background: rgba(3,14,21,.25); }
+.role-card-icon { width: 27px; height: 27px; display: grid; place-items: center; flex: none; border-radius: 8px; color: var(--cyan); background: rgba(91,208,209,.1); }
+.role-card > div { min-width: 0; }
+.role-card small, .role-card strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.role-card small { color: var(--muted-2); font: 7px "DM Mono", monospace; text-transform: uppercase; }
+.role-card strong { margin-top: 4px; color: #dbe9ea; font-size: 9px; }
+.role-card strong em { color: var(--muted-2); font-style: normal; font-weight: 500; }
+.role-card.tone-lime .role-card-icon { color: var(--lime); background: rgba(181,239,140,.1); }
+.role-card.tone-purple .role-card-icon { color: var(--purple); background: rgba(211,181,255,.1); }
+.role-card.tone-amber .role-card-icon { color: var(--amber); background: rgba(245,205,120,.1); }
+.role-card.tone-red .role-card-icon { color: var(--red); background: rgba(255,154,138,.1); }
+.role-card.tone-fixed .role-card-icon { color: #a9c7ff; background: rgba(106,153,255,.1); }
+.supervisor-roster { margin-top: 13px; padding-top: 11px; border-top: 1px solid rgba(188,220,228,.08); }
+.supervisor-roster > small { display: block; color: var(--muted-2); font: 7px "DM Mono", monospace; text-transform: uppercase; }
+.supervisor-roster > div { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.person-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 8px; border: 1px solid rgba(158,233,232,.21); border-radius: 999px; color: var(--cyan); background: rgba(91,208,209,.07); font-size: 8px; }
+.person-chip:hover { border-color: rgba(158,233,232,.55); background: rgba(91,208,209,.13); }
+.person-chip.static { cursor: default; }
+.person-chip.static:hover { border-color: rgba(158,233,232,.21); background: rgba(91,208,209,.07); }
+.milestone-list { display: grid; gap: 4px; margin-top: 15px; }
+.milestone-row { display: grid; grid-template-columns: 9px minmax(0,1fr) auto; align-items: center; gap: 9px; padding: 9px 0; border-bottom: 1px solid rgba(188,220,228,.07); }
+.milestone-row:last-child { border-bottom: 0; }
+.milestone-dot { width: 8px; height: 8px; border: 2px solid var(--cyan); border-radius: 50%; background: transparent; box-shadow: 0 0 9px rgba(158,233,232,.25); }
+.milestone-in_progress .milestone-dot { border-color: var(--amber); background: var(--amber); box-shadow: 0 0 10px rgba(245,205,120,.36); }
+.milestone-done .milestone-dot { border-color: var(--lime); background: var(--lime); box-shadow: 0 0 10px rgba(181,239,140,.32); }
+.milestone-blocked .milestone-dot, .milestone-row.is-late .milestone-dot { border-color: var(--red); background: var(--red); }
+.milestone-copy { min-width: 0; }
+.milestone-copy strong, .milestone-copy small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.milestone-copy strong { color: #d8e8e9; font-size: 9px; }
+.milestone-copy small { margin-top: 4px; color: var(--muted-2); font: 7px "DM Mono", monospace; }
+.milestone-status { display: grid; justify-items: end; gap: 4px; }
+.milestone-status > span { color: var(--cyan); font: 8px "DM Mono", monospace; white-space: nowrap; }
+.milestone-in_progress .milestone-status > span { color: var(--amber); }.milestone-done .milestone-status > span { color: var(--lime); }.milestone-blocked .milestone-status > span, .milestone-row.is-late .milestone-status > span { color: var(--red); }
+.milestone-status button { padding: 0; border: 0; color: var(--muted-2); background: transparent; font-size: 7px; text-decoration: underline; }
+.milestone-status button:hover { color: var(--text); }
+.cockpit-empty { display: grid; justify-items: center; gap: 8px; padding: 22px 10px; color: var(--muted-2); font-size: 9px; line-height: 1.45; text-align: center; }
+.cockpit-empty svg { color: var(--cyan); }
+.cockpit-footnote { display: flex; align-items: center; gap: 6px; padding: 8px 10px; color: var(--muted-2); font: 8px "DM Mono", monospace; }
+.cockpit-footnote svg { color: var(--cyan); }.cockpit-footnote strong { color: #cfe4e5; font-weight: 500; }
+.cockpit-form { gap: 0; }
+.cockpit-form-section { margin-top: 17px; padding: 14px; border: 1px solid rgba(158,233,232,.13); border-radius: 12px; background: rgba(91,208,209,.035); }
+.cockpit-form-title { display: flex; align-items: center; gap: 7px; color: var(--cyan); font: 9px "DM Mono", monospace; letter-spacing: .08em; text-transform: uppercase; }
+.cockpit-form-section > .form-grid { margin-top: 14px; }.cockpit-form-section > label { margin-top: 14px; }
+.field-stack { display: grid; gap: 7px; min-width: 0; }.field-label { color: #bdced2; font-size: 10px; font-weight: 700; }
+.fixed-owner { display: grid; grid-template-columns: auto minmax(0,1fr); align-items: center; column-gap: 7px; min-height: 41px; padding: 7px 10px; border: 1px solid rgba(158,233,232,.15); border-radius: 9px; color: var(--cyan); background: rgba(91,208,209,.055); }
+.fixed-owner strong, .fixed-owner small { display: block; grid-column: 2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.fixed-owner svg { grid-row: 1 / span 2; }.fixed-owner strong { color: #dcebec; font-size: 10px; }.fixed-owner small { margin-top: 3px; color: var(--muted-2); font-size: 7px; }
+.money-input { display: grid; grid-template-columns: minmax(0,1fr) 64px; gap: 6px; }.currency-input { text-transform: uppercase; }
+.supervisor-picker { display: grid; gap: 8px; margin-top: 14px; }.supervisor-selected { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 30px; }.supervisor-selected > small { color: var(--muted-2); font-size: 9px; }
+@media (max-width: 980px) { .cockpit-columns { grid-template-columns: 1fr; }.cockpit-hero { flex-direction: column; }.cockpit-hero-actions { justify-content: flex-start; } }
+@media (max-width: 620px) { .cockpit-kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }.role-card-grid { grid-template-columns: 1fr; }.cockpit-card { padding: 14px; }.cockpit-hero { padding: 16px; }.cockpit-hero h2 { font-size: 23px; }.cockpit-hero-actions { width: 100%; }.cockpit-hero-actions .button { flex: 1; }.milestone-row { grid-template-columns: 8px minmax(0,1fr); }.milestone-status { grid-column: 2; justify-items: start; display: flex; align-items: center; gap: 8px; }.cockpit-form-section { padding: 11px; } }
+.cockpit-migration-note { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border: 1px dashed rgba(245,205,120,.3); border-radius: 10px; color: #dec78d; background: rgba(245,205,120,.045); font-size: 8px; line-height: 1.5; }.cockpit-migration-note svg { flex: none; margin-top: 1px; }

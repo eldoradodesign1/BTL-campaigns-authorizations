@@ -46,6 +46,76 @@ export type CampaignRecord = {
   updated_at?: string;
 };
 
+export type CockpitTerritory =
+  | "kinshasa"
+  | "interior"
+  | "provincial"
+  | "national";
+export type CockpitMilestoneKind =
+  | "brief"
+  | "proforma"
+  | "authorization"
+  | "media"
+  | "operations"
+  | "launch"
+  | "reporting"
+  | "other";
+export type CockpitMilestoneStatus =
+  | "planned"
+  | "in_progress"
+  | "done"
+  | "blocked";
+
+export type CampaignCockpitDetail = {
+  campaign_id: string;
+  client_name: string | null;
+  project_owner_id: string | null;
+  project_manager_id: string | null;
+  finance_owner_id: string;
+  media_owner_id: string | null;
+  field_operations_owner_id: string | null;
+  authorization_owner_id: string | null;
+  it_support_id: string;
+  it_backup_id: string;
+  territory: CockpitTerritory;
+  objective: string | null;
+  proforma_reference: string | null;
+  proforma_url: string | null;
+  allocated_budget: number | null;
+  budget_currency: string;
+  updated_by: string | null;
+  updated_at?: string;
+};
+
+export type CampaignCockpitSupervisor = {
+  id: string;
+  campaign_id: string;
+  supervisor_id: string;
+  assigned_by: string | null;
+  is_active: boolean;
+  assigned_at: string;
+};
+
+export type CampaignCockpitMilestone = {
+  id: string;
+  campaign_id: string;
+  title: string;
+  kind: CockpitMilestoneKind;
+  due_on: string;
+  status: CockpitMilestoneStatus;
+  owner_id: string | null;
+  notes: string | null;
+  created_by: string;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CockpitUser = Pick<
+  UserProfile,
+  "id" | "full_name" | "role" | "user_category" | "avatar_url"
+>;
+
 export type AuthorizationRecord = {
   id: string;
   campaign_id: string;
@@ -315,6 +385,169 @@ export async function loadAuthorizations(
   );
   if (error) throw error;
   return (data || []).map(asAuthorization);
+}
+
+export async function loadCockpitUsers(
+  actorId: string
+): Promise<CockpitUser[]> {
+  const { data, error } = await assertClient().rpc(
+    "list_campaign_cockpit_users",
+    {
+      p_actor_id: actorId,
+    }
+  );
+  if (error) throw error;
+  return (data || []) as CockpitUser[];
+}
+
+export async function loadCockpitDetails(
+  actorId: string
+): Promise<CampaignCockpitDetail[]> {
+  const { data, error } = await assertClient().rpc(
+    "list_campaign_cockpit_details",
+    {
+      p_actor_id: actorId,
+    }
+  );
+  if (error) throw error;
+  return (data || []) as CampaignCockpitDetail[];
+}
+
+export async function loadCockpitSupervisors(
+  actorId: string
+): Promise<CampaignCockpitSupervisor[]> {
+  const { data, error } = await assertClient().rpc(
+    "list_campaign_cockpit_supervisors",
+    {
+      p_actor_id: actorId,
+    }
+  );
+  if (error) throw error;
+  return (data || []) as CampaignCockpitSupervisor[];
+}
+
+export async function loadCockpitMilestones(
+  actorId: string
+): Promise<CampaignCockpitMilestone[]> {
+  const { data, error } = await assertClient().rpc(
+    "list_campaign_cockpit_milestones",
+    {
+      p_actor_id: actorId,
+    }
+  );
+  if (error) throw error;
+  return (data || []) as CampaignCockpitMilestone[];
+}
+
+export async function upsertCockpitDetails(
+  actorId: string,
+  campaignId: string,
+  input: {
+    clientName: string;
+    projectOwnerId: string;
+    projectManagerId: string;
+    mediaOwnerId: string;
+    fieldOperationsOwnerId: string;
+    authorizationOwnerId: string;
+    territory: CockpitTerritory;
+    objective: string;
+    proformaReference: string;
+    proformaUrl: string;
+    allocatedBudget: number | null;
+    budgetCurrency: string;
+  }
+): Promise<CampaignCockpitDetail> {
+  const { data, error } = await assertClient().rpc(
+    "upsert_campaign_cockpit_details",
+    {
+      p_actor_id: actorId,
+      p_campaign_id: campaignId,
+      p_client_name: input.clientName,
+      p_project_owner_id: input.projectOwnerId || null,
+      p_project_manager_id: input.projectManagerId || null,
+      p_media_owner_id: input.mediaOwnerId || null,
+      p_field_operations_owner_id: input.fieldOperationsOwnerId || null,
+      p_authorization_owner_id: input.authorizationOwnerId || null,
+      p_territory: input.territory,
+      p_objective: input.objective,
+      p_proforma_reference: input.proformaReference,
+      p_proforma_url: input.proformaUrl,
+      p_allocated_budget: input.allocatedBudget,
+      p_budget_currency: input.budgetCurrency,
+    }
+  );
+  if (error) throw error;
+  const detail = first(data);
+  if (!detail)
+    throw new Error(
+      "Les informations du projet n’ont pas pu être enregistrées."
+    );
+  return detail as CampaignCockpitDetail;
+}
+
+export async function syncCockpitSupervisors(
+  actorId: string,
+  campaignId: string,
+  supervisorIds: string[]
+): Promise<CampaignCockpitSupervisor[]> {
+  const { data, error } = await assertClient().rpc(
+    "sync_campaign_cockpit_supervisors",
+    {
+      p_actor_id: actorId,
+      p_campaign_id: campaignId,
+      p_supervisor_ids: supervisorIds,
+    }
+  );
+  if (error) throw error;
+  return (data || []) as CampaignCockpitSupervisor[];
+}
+
+export async function createCockpitMilestone(
+  actorId: string,
+  input: {
+    campaignId: string;
+    title: string;
+    kind: CockpitMilestoneKind;
+    dueOn: string;
+    status: CockpitMilestoneStatus;
+    ownerId: string;
+    notes: string;
+  }
+): Promise<CampaignCockpitMilestone> {
+  const { data, error } = await assertClient().rpc(
+    "create_campaign_cockpit_milestone",
+    {
+      p_actor_id: actorId,
+      p_campaign_id: input.campaignId,
+      p_title: input.title,
+      p_kind: input.kind,
+      p_due_on: input.dueOn,
+      p_status: input.status,
+      p_owner_id: input.ownerId || null,
+      p_notes: input.notes,
+    }
+  );
+  if (error) throw error;
+  if (!data) throw new Error("Le jalon n’a pas pu être créé.");
+  return data as CampaignCockpitMilestone;
+}
+
+export async function updateCockpitMilestone(
+  actorId: string,
+  milestoneId: string,
+  status: CockpitMilestoneStatus
+): Promise<CampaignCockpitMilestone> {
+  const { data, error } = await assertClient().rpc(
+    "update_campaign_cockpit_milestone",
+    {
+      p_actor_id: actorId,
+      p_milestone_id: milestoneId,
+      p_status: status,
+    }
+  );
+  if (error) throw error;
+  if (!data) throw new Error("Le jalon n’a pas pu être mis à jour.");
+  return data as CampaignCockpitMilestone;
 }
 
 export async function createCampaign(input: {

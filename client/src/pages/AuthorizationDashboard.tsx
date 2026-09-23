@@ -12,42 +12,69 @@ import {
   ChevronDown,
   Clock3,
   Database,
+  ExternalLink,
   FilePenLine,
   ImagePlus,
   Info,
+  LayoutDashboard,
+  ListChecks,
   LogIn,
   LogOut,
+  MapPin,
   Plus,
   RefreshCw,
   ShieldCheck,
   Sparkles,
   TimerReset,
   TrendingUp,
+  UserRound,
+  Users,
+  WalletCards,
   UserCircle2,
   X,
 } from "lucide-react";
 import BrandLogo from "@/components/BrandLogo";
 import {
+  CampaignCockpit,
+  CampaignCockpitForm,
+  MilestoneForm,
+} from "@/components/CampaignCockpit";
+import {
   clearSupabaseConnection,
   canAccessAuthorizations,
   configureSupabase,
+  createCockpitMilestone,
   createAuthorization,
   createCampaign,
   getStoredProfile,
   getSupabaseConnection,
   isSupabaseConfigured,
   loadAuthorizations,
+  loadCockpitDetails,
+  loadCockpitMilestones,
+  loadCockpitSupervisors,
+  loadCockpitUsers,
   loadCampaigns,
   markAuthorizationReceived,
   signIn,
   signOut,
+  syncCockpitSupervisors,
   testSupabaseConnection,
+  updateCockpitMilestone,
   updateAuthorization,
+  upsertCockpitDetails,
   type AuthorizationInput,
   type AuthorizationPriority,
   type AuthorizationRecord,
+  type CampaignCockpitDetail,
+  type CampaignCockpitMilestone,
+  type CampaignCockpitSupervisor,
+  type CockpitUser,
   type CampaignRecord,
   type CampaignType,
+  type CockpitMilestoneKind,
+  type CockpitMilestoneStatus,
+  type CockpitTerritory,
   type UserProfile,
 } from "@/lib/supabase";
 
@@ -69,6 +96,28 @@ const CAMPAIGN_TYPE_LABELS: Record<CampaignType, string> = {
   brand_ambassador: "Brand Ambassador",
   operations: "Opérations",
 };
+const TERRITORY_LABELS: Record<CockpitTerritory, string> = {
+  kinshasa: "Kinshasa",
+  interior: "Intérieur / région",
+  provincial: "Provincial",
+  national: "National",
+};
+const MILESTONE_KIND_LABELS: Record<CockpitMilestoneKind, string> = {
+  brief: "Brief / cadrage",
+  proforma: "Proforma",
+  authorization: "Autorisations",
+  media: "Médias",
+  operations: "Opérations terrain",
+  launch: "Lancement",
+  reporting: "Reporting",
+  other: "Autre",
+};
+const MILESTONE_STATUS_LABELS: Record<CockpitMilestoneStatus, string> = {
+  planned: "Planifié",
+  in_progress: "En cours",
+  done: "Terminé",
+  blocked: "Bloqué",
+};
 const EMPTY_AUTH: AuthorizationInput = {
   campaignId: "",
   reference: "",
@@ -80,6 +129,25 @@ const EMPTY_AUTH: AuthorizationInput = {
   validUntil: "",
   isPermanent: false,
   description: "",
+};
+const EMPTY_COCKPIT_DETAIL: Omit<
+  CampaignCockpitDetail,
+  "campaign_id" | "finance_owner_id" | "it_support_id" | "it_backup_id"
+> = {
+  client_name: "",
+  project_owner_id: "",
+  project_manager_id: "",
+  media_owner_id: "",
+  field_operations_owner_id: "",
+  authorization_owner_id: "",
+  territory: "national",
+  objective: "",
+  proforma_reference: "",
+  proforma_url: "",
+  allocated_budget: null,
+  budget_currency: "USD",
+  updated_by: null,
+  updated_at: undefined,
 };
 
 type Notice = { kind: "success" | "error"; message: string } | null;
@@ -441,6 +509,19 @@ export default function AuthorizationDashboard({
   const [authorizations, setAuthorizations] = useState<AuthorizationRecord[]>(
     []
   );
+  const [cockpitUsers, setCockpitUsers] = useState<CockpitUser[]>([]);
+  const [cockpitAvailable, setCockpitAvailable] = useState(false);
+  const [cockpitDetails, setCockpitDetails] = useState<CampaignCockpitDetail[]>(
+    []
+  );
+  const [cockpitSupervisors, setCockpitSupervisors] = useState<
+    CampaignCockpitSupervisor[]
+  >([]);
+  const [cockpitMilestones, setCockpitMilestones] = useState<
+    CampaignCockpitMilestone[]
+  >([]);
+  const [cockpitFormOpen, setCockpitFormOpen] = useState(false);
+  const [milestoneFormOpen, setMilestoneFormOpen] = useState(false);
   const [campaignAuthorizations, setCampaignAuthorizations] = useState<
     Record<string, AuthorizationRecord[]>
   >({});
@@ -472,6 +553,15 @@ export default function AuthorizationDashboard({
 
   const selectedCampaign =
     campaigns.find(campaign => campaign.id === selectedCampaignId) || null;
+  const selectedCockpitDetail =
+    cockpitDetails.find(detail => detail.campaign_id === selectedCampaignId) ||
+    null;
+  const canEditCockpit =
+    profile?.role === "sub_admin" ||
+    profile?.role === "admin" ||
+    profile?.role === "super_admin";
+  const selectedCockpitAuthorizations =
+    campaignAuthorizations[selectedCampaignId] || [];
   const canCreateCampaign =
     profile?.role === "admin" || profile?.role === "super_admin";
   const campaignStats = useMemo(
@@ -511,7 +601,31 @@ export default function AuthorizationDashboard({
     setLoadingData(true);
     try {
       const nextCampaigns = await loadCampaigns(actor.id);
+      const [usersResult, detailsResult, supervisorsResult, milestonesResult] =
+        await Promise.allSettled([
+          loadCockpitUsers(actor.id),
+          loadCockpitDetails(actor.id),
+          loadCockpitSupervisors(actor.id),
+          loadCockpitMilestones(actor.id),
+        ]);
       setCampaigns(nextCampaigns);
+      setCockpitUsers(
+        usersResult.status === "fulfilled" ? usersResult.value : []
+      );
+      setCockpitDetails(
+        detailsResult.status === "fulfilled" ? detailsResult.value : []
+      );
+      setCockpitSupervisors(
+        supervisorsResult.status === "fulfilled" ? supervisorsResult.value : []
+      );
+      setCockpitMilestones(
+        milestonesResult.status === "fulfilled" ? milestonesResult.value : []
+      );
+      setCockpitAvailable(
+        [usersResult, detailsResult, supervisorsResult, milestonesResult].some(
+          result => result.status === "fulfilled"
+        )
+      );
       const overviewEntries = await Promise.all(
         nextCampaigns.map(
           async campaign =>
@@ -726,6 +840,88 @@ export default function AuthorizationDashboard({
       setNotice({
         kind: "error",
         message: readableError(error, "Impossible de créer la campagne."),
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleCockpitSave(
+    input: Parameters<typeof upsertCockpitDetails>[2],
+    supervisorIds: string[]
+  ) {
+    if (!profile || !selectedCampaign) return;
+    setBusy(true);
+    try {
+      const [savedDetail, savedSupervisors] = await Promise.all([
+        upsertCockpitDetails(profile.id, selectedCampaign.id, input),
+        syncCockpitSupervisors(profile.id, selectedCampaign.id, supervisorIds),
+      ]);
+      setCockpitDetails(current => [
+        ...current.filter(item => item.campaign_id !== savedDetail.campaign_id),
+        savedDetail,
+      ]);
+      setCockpitSupervisors(current => [
+        ...current.filter(item => item.campaign_id !== selectedCampaign.id),
+        ...savedSupervisors,
+      ]);
+      setCockpitFormOpen(false);
+      setNotice({
+        kind: "success",
+        message: "La fiche projet et son équipe ont été enregistrées.",
+      });
+    } catch (error) {
+      setNotice({
+        kind: "error",
+        message: readableError(
+          error,
+          "Impossible d’enregistrer la fiche projet."
+        ),
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleMilestoneSave(
+    input: Parameters<typeof createCockpitMilestone>[1]
+  ) {
+    if (!profile) return;
+    setBusy(true);
+    try {
+      const created = await createCockpitMilestone(profile.id, input);
+      setCockpitMilestones(current => [...current, created]);
+      setMilestoneFormOpen(false);
+      setNotice({ kind: "success", message: "Jalon ajouté à la chronologie." });
+    } catch (error) {
+      setNotice({
+        kind: "error",
+        message: readableError(error, "Impossible de créer le jalon."),
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleMilestoneStatus(
+    milestone: CampaignCockpitMilestone,
+    status: CockpitMilestoneStatus
+  ) {
+    if (!profile) return;
+    setBusy(true);
+    try {
+      const updated = await updateCockpitMilestone(
+        profile.id,
+        milestone.id,
+        status
+      );
+      setCockpitMilestones(current =>
+        current.map(item => (item.id === updated.id ? updated : item))
+      );
+    } catch (error) {
+      setNotice({
+        kind: "error",
+        message: readableError(error, "Impossible de mettre à jour le jalon."),
       });
     } finally {
       setBusy(false);
@@ -1000,7 +1196,11 @@ export default function AuthorizationDashboard({
               <div className="donut-layout">
                 <div
                   className="donut-chart"
-                  style={{ "--progress": `${overviewStats.completion}%` } as React.CSSProperties}
+                  style={
+                    {
+                      "--progress": `${overviewStats.completion}%`,
+                    } as React.CSSProperties
+                  }
                 >
                   <div>
                     <strong>{overviewStats.completion}%</strong>
@@ -1008,9 +1208,21 @@ export default function AuthorizationDashboard({
                   </div>
                 </div>
                 <div className="donut-legend">
-                  <div><span className="legend-dot received-dot" /><strong>{overviewStats.received}</strong><small>preuves reçues</small></div>
-                  <div><span className="legend-dot pending-dot" /><strong>{overviewStats.pending}</strong><small>en attente</small></div>
-                  <div className="legend-foot">{overviewStats.total} autorisation{overviewStats.total > 1 ? "s" : ""} suivie{overviewStats.total > 1 ? "s" : ""}</div>
+                  <div>
+                    <span className="legend-dot received-dot" />
+                    <strong>{overviewStats.received}</strong>
+                    <small>preuves reçues</small>
+                  </div>
+                  <div>
+                    <span className="legend-dot pending-dot" />
+                    <strong>{overviewStats.pending}</strong>
+                    <small>en attente</small>
+                  </div>
+                  <div className="legend-foot">
+                    {overviewStats.total} autorisation
+                    {overviewStats.total > 1 ? "s" : ""} suivie
+                    {overviewStats.total > 1 ? "s" : ""}
+                  </div>
                 </div>
               </div>
             </article>
@@ -1018,30 +1230,59 @@ export default function AuthorizationDashboard({
             <article className="insight-card campaign-insight">
               <div className="insight-card-head">
                 <div>
-                  <div className="card-kicker"><BarChart3 size={14} /> Lecture par campagne</div>
+                  <div className="card-kicker">
+                    <BarChart3 size={14} /> Lecture par campagne
+                  </div>
                   <h3>Où agir en premier</h3>
                 </div>
-                <span className="metric-badge">{campaigns.length} CAMPAGNES</span>
+                <span className="metric-badge">
+                  {campaigns.length} CAMPAGNES
+                </span>
               </div>
               <div className="campaign-bars">
                 {campaigns.map(campaign => {
                   const items = campaignAuthorizations[campaign.id] || [];
-                  const received = items.filter(item => item.status === "received").length;
-                  const progress = items.length ? Math.round((received / items.length) * 100) : 0;
-                  return <button type="button" className="campaign-bar-row" key={campaign.id} onClick={() => setSelectedCampaignId(campaign.id)}>
-                    <span className="bar-label"><strong>{campaign.name}</strong><small>{received}/{items.length} reçue{received > 1 ? "s" : ""}</small></span>
-                    <span className="bar-track"><span style={{ width: `${progress}%` }} /></span>
-                    <strong className="bar-percent">{progress}%</strong>
-                  </button>;
+                  const received = items.filter(
+                    item => item.status === "received"
+                  ).length;
+                  const progress = items.length
+                    ? Math.round((received / items.length) * 100)
+                    : 0;
+                  return (
+                    <button
+                      type="button"
+                      className="campaign-bar-row"
+                      key={campaign.id}
+                      onClick={() => setSelectedCampaignId(campaign.id)}
+                    >
+                      <span className="bar-label">
+                        <strong>{campaign.name}</strong>
+                        <small>
+                          {received}/{items.length} reçue
+                          {received > 1 ? "s" : ""}
+                        </small>
+                      </span>
+                      <span className="bar-track">
+                        <span style={{ width: `${progress}%` }} />
+                      </span>
+                      <strong className="bar-percent">{progress}%</strong>
+                    </button>
+                  );
                 })}
-                {!campaigns.length && <div className="insight-empty">Les campagnes apparaîtront ici dès leur synchronisation.</div>}
+                {!campaigns.length && (
+                  <div className="insight-empty">
+                    Les campagnes apparaîtront ici dès leur synchronisation.
+                  </div>
+                )}
               </div>
             </article>
 
             <article className="insight-card deadline-insight">
               <div className="insight-card-head">
                 <div>
-                  <div className="card-kicker"><TimerReset size={14} /> Radar des échéances</div>
+                  <div className="card-kicker">
+                    <TimerReset size={14} /> Radar des échéances
+                  </div>
                   <h3>Les dates à surveiller</h3>
                 </div>
                 <span className="metric-badge">5 PROCHAINES</span>
@@ -1049,20 +1290,74 @@ export default function AuthorizationDashboard({
               <div className="deadline-list">
                 {deadlineItems.map(item => {
                   const days = daysUntil(item.valid_until);
-                  const campaignName = campaigns.find(campaign => campaign.id === item.campaign_id)?.name || "Campagne";
+                  const campaignName =
+                    campaigns.find(campaign => campaign.id === item.campaign_id)
+                      ?.name || "Campagne";
                   const urgent = days !== null && days <= 7;
                   const expired = days !== null && days < 0;
-                  return <button type="button" className={`deadline-row ${urgent ? "is-urgent" : ""} ${expired ? "is-expired" : ""}`} key={item.id} onClick={() => setSelectedCampaignId(item.campaign_id)}>
-                    <span className="deadline-date"><strong>{formatDate(item.valid_until)}</strong><small>{expired ? "Dépassée" : days === 0 ? "Aujourd’hui" : `J-${days}`}</small></span>
-                    <span className="deadline-detail"><strong>{item.label}</strong><small>{campaignName}</small></span>
-                    <span className={`deadline-status ${item.status === "received" ? "received" : "pending"}`}>{item.status === "received" ? "Reçue" : "À traiter"}</span>
-                  </button>;
+                  return (
+                    <button
+                      type="button"
+                      className={`deadline-row ${urgent ? "is-urgent" : ""} ${expired ? "is-expired" : ""}`}
+                      key={item.id}
+                      onClick={() => setSelectedCampaignId(item.campaign_id)}
+                    >
+                      <span className="deadline-date">
+                        <strong>{formatDate(item.valid_until)}</strong>
+                        <small>
+                          {expired
+                            ? "Dépassée"
+                            : days === 0
+                              ? "Aujourd’hui"
+                              : `J-${days}`}
+                        </small>
+                      </span>
+                      <span className="deadline-detail">
+                        <strong>{item.label}</strong>
+                        <small>{campaignName}</small>
+                      </span>
+                      <span
+                        className={`deadline-status ${item.status === "received" ? "received" : "pending"}`}
+                      >
+                        {item.status === "received" ? "Reçue" : "À traiter"}
+                      </span>
+                    </button>
+                  );
                 })}
-                {!deadlineItems.length && <div className="insight-empty">Aucune échéance datée à signaler. Les autorisations pérennes sont stables.</div>}
+                {!deadlineItems.length && (
+                  <div className="insight-empty">
+                    Aucune échéance datée à signaler. Les autorisations pérennes
+                    sont stables.
+                  </div>
+                )}
               </div>
             </article>
           </div>
         </section>
+        {selectedCampaign && (
+          <CampaignCockpit
+            campaign={selectedCampaign}
+            detail={selectedCockpitDetail}
+            users={cockpitUsers}
+            supervisors={cockpitSupervisors}
+            milestones={cockpitMilestones}
+            authorizationTotal={selectedCockpitAuthorizations.length}
+            authorizationReceived={
+              selectedCockpitAuthorizations.filter(
+                item => item.status === "received"
+              ).length
+            }
+            available={cockpitAvailable}
+            canEdit={Boolean(canEditCockpit)}
+            busy={busy}
+            onEdit={() => setCockpitFormOpen(true)}
+            onAddMilestone={() => setMilestoneFormOpen(true)}
+            onMilestoneStatus={(milestone, status) =>
+              void handleMilestoneStatus(milestone, status)
+            }
+            onNotice={setNotice}
+          />
+        )}
         <div className="dashboard-grid">
           <aside className="campaign-panel glass-card">
             <div className="section-head">
@@ -1443,6 +1738,28 @@ export default function AuthorizationDashboard({
             </div>
           </form>
         </Modal>
+      )}
+      {cockpitFormOpen && selectedCampaign && (
+        <CampaignCockpitForm
+          campaign={selectedCampaign}
+          detail={selectedCockpitDetail}
+          users={cockpitUsers}
+          supervisors={cockpitSupervisors}
+          busy={busy}
+          onSave={(input, supervisorIds) =>
+            void handleCockpitSave(input, supervisorIds)
+          }
+          onClose={() => setCockpitFormOpen(false)}
+        />
+      )}
+      {milestoneFormOpen && selectedCampaign && (
+        <MilestoneForm
+          campaign={selectedCampaign}
+          users={cockpitUsers}
+          busy={busy}
+          onSave={input => void handleMilestoneSave(input)}
+          onClose={() => setMilestoneFormOpen(false)}
+        />
       )}
       {authOpen && (
         <Modal wide onClose={() => setAuthOpen(false)}>
